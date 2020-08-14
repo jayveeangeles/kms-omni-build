@@ -1,0 +1,26 @@
+diff --git a/server/death_handler.cpp b/server/death_handler.cpp
+index 07b25ca..0d5e25e 100644
+--- a/server/death_handler.cpp
++++ b/server/death_handler.cpp
+@@ -606,6 +606,7 @@ void DeathHandler::SignalHandler (int sig, void * /* info */, void *secret)
+ #elif defined(__aarch64__)
+   trace[1] = reinterpret_cast<void *> (uc->uc_mcontext.pc);
+ #else
++/*
+ #if !defined(__i386__) && !defined(__x86_64__)
+ #error Only ARM, x86 and x86-64 are supported
+ #endif
+@@ -614,6 +615,13 @@ void DeathHandler::SignalHandler (int sig, void * /* info */, void *secret)
+ #else
+   trace[1] = reinterpret_cast<void *> (uc->uc_mcontext.gregs[REG_EIP]);
+ #endif
++*/
++#if defined(__ppc64__) || defined(__PPC64__) || defined(__ppc64le__) || \
++      defined(__PPC64LE__)
++  trace[1] = reinterpret_cast<void *> (uc->uc_mcontext.gp_regs[PT_NIP]);
++#else
++  trace[1] = reinterpret_cast<void *> (uc->uc_mcontext.gregs[REG_RIP]);
++#endif
+ #endif
+
+   const int path_max_length = 2048;
