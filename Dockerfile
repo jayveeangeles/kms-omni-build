@@ -143,9 +143,9 @@ RUN /build/kurento-buildpackage.sh  --srcdir libnice/ --dstdir /tmp/pkgs/ && apt
 # Build Kurento
 RUN git clone https://github.com/jayveeangeles/kms-omni-build.git && \
   cd kms-omni-build && \
+  git checkout ppc64le-dev && \
   git submodule update --init --recursive && \
   git submodule update --remote && \
-  git checkout ppc64le-dev && \
   git submodule foreach "git checkout 6.14.0 || true"
 
 WORKDIR /build/kms-omni-build
