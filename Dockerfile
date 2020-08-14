@@ -141,14 +141,14 @@ RUN /build/kurento-buildpackage.sh  --srcdir openwebrtc-gst-plugins/ --dstdir /t
 RUN /build/kurento-buildpackage.sh  --srcdir libnice/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb
 
 # Build Kurento
-RUN git clone https://github.com/jayveeangeles/kms-omni-build.git && \
-  cd kms-omni-build && \
-  git checkout ppc64le-dev && \
+WORKDIR /build/kms-omni-build
+
+COPY . .
+
+RUN git checkout ppc64le-dev && \
   git submodule update --init --recursive && \
   git submodule update --remote && \
   git submodule foreach "git checkout 6.14.0 || true"
-
-WORKDIR /build/kms-omni-build
 
 RUN apt install -y libboost-all-dev && \
   apt install -y libboost-program-options1.58.0 libboost-regex1.58.0 libboost-system1.58.0 libboost-thread1.58.0 libboost-filesystem1.58.0 libboost-log1.58.0 && \
