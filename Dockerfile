@@ -159,7 +159,7 @@ RUN sed -i 's/x86_64-linux-gnu/powerpc64le-linux-gnu/' bin/kms-build-run.sh && \
   cd kurento-media-server && \
   patch -p1 < /build/kms-omni-build/patches/death_handler.cpp.patch
 
-RUN MAKEFLAGS="-j32" ./bin/kms-build-run.sh
+RUN MAKEFLAGS="-j32" ./bin/kms-build-run.sh --build-only
 
 CMD ["./bin/kms-build-run.sh"]
 
