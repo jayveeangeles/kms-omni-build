@@ -62,11 +62,10 @@ RUN git config --system user.name "kurento-buildpackage" \
 # env variable again to "false".
 ENV APT_KEEP_CACHE="true"
 
-# Download utils
+# Download utils and "Fix" openh264 for Power
 WORKDIR /build
 
 RUN apt update && \
-  # apt install -y wget && \
   wget https://raw.githubusercontent.com/Kurento/adm-scripts/45872e052dcdd485d242346fae48012dfa336bba/development/kurento-git-clone-externals -O \
   /build/kurento-git-clone-externals && \
   chmod +x /build/kurento-git-clone-externals && \
@@ -81,72 +80,64 @@ RUN apt update && \
   mkdir /tmp/pkgs && \
   wget https://raw.githubusercontent.com/Kurento/adm-scripts/master/kurento-buildpackage.sh -O \
   /build/kurento-buildpackage.sh && \
-  chmod +x /build/kurento-buildpackage.sh
-
-# "Fix" openh264 for Power
-WORKDIR /build/openh264
-
-RUN pip3 install --upgrade pip && \
+  chmod +x /build/kurento-buildpackage.sh && \
+  pip3 install --upgrade pip && \
   sed -i 's/x86_64-linux-gnu/powerpc64le-linux-gnu/' /build/openh264/debian/openh264.postinst && \
   sed -i 's/x86_64-linux-gnu/powerpc64le-linux-gnu/' /build/openh264/debian/openh264.install && \
   sed -i 's/x86_64-linux-gnu/powerpc64le-linux-gnu/' /build/openh264/openh264.pc && \
-  /build/kurento-buildpackage.sh  --srcdir . --dstdir /tmp/pkgs/ && \
-  apt install /tmp/pkgs/openh264_1.5.0*.deb
-
-WORKDIR /build/openh264-1.5.0
-
-RUN make ENABLE64BIT=Yes -j 32 && \
+  /build/kurento-buildpackage.sh  --srcdir openh264 --dstdir /tmp/pkgs/ && \
+  apt install /tmp/pkgs/openh264_1.5.0*.deb && \
+  cd /build/openh264-1.5.0 && \
+  make ENABLE64BIT=Yes -j 32 && \
   rm -rf /usr/lib/powerpc64le-linux-gnu/libopenh264.so* && \
-  cp libopenh264.so /usr/lib/powerpc64le-linux-gnu/libopenh264.so && \
+  cp libopenh264.so.1 /usr/lib/powerpc64le-linux-gnu/libopenh264.so && \
   ln -sf /usr/lib/powerpc64le-linux-gnu/libopenh264.so /usr/lib/powerpc64le-linux-gnu/libopenh264.so.5 && \
   ln -sf /usr/lib/powerpc64le-linux-gnu/libopenh264.so /usr/lib/powerpc64le-linux-gnu/libopenh264.so.1 && \
   ln -sf /usr/lib/powerpc64le-linux-gnu/libopenh264.so /usr/lib/powerpc64le-linux-gnu/libopenh264.so.0 && \
   ldconfig
 
 # Install rest of deps
-WORKDIR /build/
 
 # JSONcpp
-RUN /build/kurento-buildpackage.sh  --srcdir jsoncpp/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*json*.deb
+RUN /build/kurento-buildpackage.sh  --srcdir jsoncpp/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*json*.deb 
 
 # libsrtp
 RUN  sed -i s'/--multiarch \\/--multiarch \\\n                --override \"s\/libssl-dev\/\/\"\\/' libsrtp/debian/rules && \
-  /build/kurento-buildpackage.sh  --srcdir libsrtp/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*srtp*.deb
+  /build/kurento-buildpackage.sh  --srcdir libsrtp/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*srtp*.deb 
 
 # usrsctp
-RUN /build/kurento-buildpackage.sh  --srcdir usrsctp/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*sctp*.deb
+RUN /build/kurento-buildpackage.sh  --srcdir usrsctp/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*sctp*.deb 
 
 # gstreamer
-RUN /build/kurento-buildpackage.sh  --srcdir gstreamer/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb
+RUN /build/kurento-buildpackage.sh  --srcdir gstreamer/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb 
 
 # gst-plugins-base
-RUN /build/kurento-buildpackage.sh  --srcdir gst-plugins-base/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb
+RUN /build/kurento-buildpackage.sh  --srcdir gst-plugins-base/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb 
 
 # gst-plugins-good
-RUN /build/kurento-buildpackage.sh  --srcdir gst-plugins-good/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb 
+RUN /build/kurento-buildpackage.sh  --srcdir gst-plugins-good/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb  
 
 # gst-plugins-bad
-RUN /build/kurento-buildpackage.sh  --srcdir gst-plugins-bad/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb
+RUN /build/kurento-buildpackage.sh  --srcdir gst-plugins-bad/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb 
 
 # gst-plugins-ugly
-RUN /build/kurento-buildpackage.sh  --srcdir gst-plugins-ugly/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb 
+RUN /build/kurento-buildpackage.sh  --srcdir gst-plugins-ugly/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb  
 
 # gst-libav
-RUN /build/kurento-buildpackage.sh  --srcdir gst-libav/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb 
+RUN /build/kurento-buildpackage.sh  --srcdir gst-libav/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb  
 
 # openwebrtc-gst-plugins
-RUN /build/kurento-buildpackage.sh  --srcdir openwebrtc-gst-plugins/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb 
+RUN /build/kurento-buildpackage.sh  --srcdir openwebrtc-gst-plugins/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb  
 
 # libnice
-RUN /build/kurento-buildpackage.sh  --srcdir libnice/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb
+RUN /build/kurento-buildpackage.sh  --srcdir libnice/ --dstdir /tmp/pkgs/ && apt install -y /tmp/pkgs/*.deb 
 
 # Build Kurento
 WORKDIR /build/kms-omni-build
 
 COPY . .
 
-RUN git checkout ppc64le-dev && \
-  git submodule update --init --recursive && \
+RUN git submodule update --init --recursive && \
   git submodule update --remote && \
   git submodule foreach "git checkout 6.14.0 || true"
 
@@ -159,7 +150,93 @@ RUN sed -i 's/x86_64-linux-gnu/powerpc64le-linux-gnu/' bin/kms-build-run.sh && \
   cd kurento-media-server && \
   patch -p1 < /build/kms-omni-build/patches/death_handler.cpp.patch
 
-RUN MAKEFLAGS="-j32" ./bin/kms-build-run.sh --build-only
+RUN MAKEFLAGS="-j32" ./bin/kms-build-run.sh --build-only --release && \
+  /bin/bash -c "find build-RelWithDebInfo-docker/ -iname *.so  | awk '/gst-plugins/ {print \"cp \" \$1 \" /usr/lib/powerpc64le-linux-gnu/gstreamer-1.5/\"}' | bash" &&  \
+  /bin/bash -c "find build-RelWithDebInfo-docker/ -iname *.so  | awk '/kms/ {print \"cp \" \$1 \" /usr/lib/powerpc64le-linux-gnu/\"}' | bash" && \
+  ldconfig
 
-CMD ["./bin/kms-build-run.sh"]
+FROM ubuntu:xenial
+
+ENV GST_DEBUG="3,Kurento*:4,kms*:4,sdp*:4,webrtc*:4,*rtpendpoint:4,rtp*handler:4,rtpsynchronizer:4,agnosticbin:4"
+
+COPY --from=builder /tmp/pkgs /tmp/pkgs
+COPY --from=builder /build/kms-omni-build /build/kms-omni-build
+
+# install deps of deps
+RUN apt update && \
+  apt install -y libssl1.0.0 \
+    libopencv-core2.4v5 \
+    libopencv-objdetect2.4v5 \
+    libopencv-imgproc2.4v5 \
+    libopencv-highgui2.4v5 \
+    libglibmm-2.4 \
+    libsigc++ \
+    gir1.2-gstreamer-1.0 && \
+  apt install -y libboost-program-options1.58.0 \
+    libboost-regex1.58.0 \
+    libboost-system1.58.0 \
+    libboost-thread1.58.0 \
+    libboost-filesystem1.58.0 \
+    libboost-log1.58.0 && \
+  rm -rf /var/lib/apt/lists/*
+
+# install debs IN ORDER
+RUN apt update && \
+  apt install -y /tmp/pkgs/kmsjsoncpp_1.6.3-1kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/libsrtp0_1.6.0-0kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/openh264_1.5.0-0kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/libusrsctp_0.9.2-1kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/libgstreamer1.5-0_1.8.1-1kurento2.16.04*.deb && \
+  apt install -y /tmp/pkgs/libgstreamer-plugins-base1.5-0_1.8.1-1kurento2.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-tools_1.8.1-1kurento2.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-plugins-base_1.8.1-1kurento2.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-plugins-base-apps_1.8.1-1kurento2.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-pulseaudio_1.8.1-1kurento4.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-alsa_1.8.1-1kurento2.16.04*.deb && \
+  apt install -y /tmp/pkgs/gir1.2-gstreamer-1.5_1.8.1-1kurento2.16.04*.deb && \
+  apt install -y /tmp/pkgs/gir1.2-gst-plugins-base-1.5_1.8.1-1kurento2.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-plugins-good_1.8.1-1kurento4.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-x_1.8.1-1kurento2.16.04*.deb && \
+  apt install -y /tmp/pkgs/libgstreamer-plugins-bad1.5-0_1.8.1-1kurento4.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-plugins-bad_1.8.1-1kurento4.16.04*.deb && \
+  apt install -y /tmp/pkgs/gir1.2-gst-plugins-bad-1.5_1.8.1-1kurento4.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-plugins-ugly_1.8.1-1kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-libav_1.8.1-1kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/openwebrtc-gst-plugins_0.10.0-1kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/libnice10_0.1.17-0kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.5-nice_0.1.17-0kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/gstreamer1.0-nice_0.1.17-0kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/gir1.2-nice-0.1_0.1.17-0kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/srtp-utils_1.6.0-0kurento1.16.04*.deb && \
+  apt install -y /tmp/pkgs/openh264-gst-plugins-bad-1.5_1.8.1-1kurento4.16.04*.deb
+
+COPY --from=builder /usr/lib/powerpc64le-linux-gnu/libopenh264.so.1 /usr/lib/powerpc64le-linux-gnu/libopenh264.so
+
+RUN ln -sf /usr/lib/powerpc64le-linux-gnu/libopenh264.so /usr/lib/powerpc64le-linux-gnu/libopenh264.so.5 && \
+  # ln -sf /usr/lib/powerpc64le-linux-gnu/libopenh264.so /usr/lib/powerpc64le-linux-gnu/libopenh264.so.1 && \
+  ln -sf /usr/lib/powerpc64le-linux-gnu/libopenh264.so /usr/lib/powerpc64le-linux-gnu/libopenh264.so.0 && \
+  ldconfig
+
+WORKDIR /build/kms-omni-build/build-RelWithDebInfo-docker
+
+RUN  /bin/bash -c "find . -iname *.so  | awk '/gst-plugins/ {print \"cp \" \$1 \" /usr/lib/powerpc64le-linux-gnu/gstreamer-1.5/\"}' | bash" &&  \
+  /bin/bash -c "find . -iname *.so  | awk '/kms/ {print \"cp \" \$1 \" /usr/lib/powerpc64le-linux-gnu/\"}' | bash" && \
+  ldconfig
+
+# RUN chgrp -R 0 /build/kms-omni-build && \
+#   chmod -R g=u /build/kms-omni-build && \
+RUN chmod g=u /etc/passwd && \
+  chmod +x /build/kms-omni-build/entrypoint.sh
+
+ENTRYPOINT ["/build/kms-omni-build/entrypoint.sh"]
+
+USER 1001
+
+CMD ["/build/kms-omni-build/build-RelWithDebInfo-docker/kurento-media-server/server/kurento-media-server", \
+  "--modules-path=/build/kms-omni-build/build-RelWithDebInfo-docker:/usr/lib/powerpc64le-linux-gnu/kurento/modules", \
+  "--conf-file=/build/kms-omni-build/build-RelWithDebInfo-docker/config/kurento.conf.json", \
+  "--modules-config-path=/build/kms-omni-build/build-RelWithDebInfo-docker/config", \
+  "--gst-plugin-path=/build/kms-omni-build/build-RelWithDebInfo-docker", \
+  "--gst-disable-registry-fork", \
+  "--gst-disable-registry-update"]
 
